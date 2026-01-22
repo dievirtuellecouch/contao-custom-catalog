@@ -1,0 +1,33 @@
+<?php $base = (string) ($this->basePath ?? ''); ?>
+<?php $count = (int) (is_array($this->entries ?? null) ? count($this->entries) : 0); ?>
+<?php // Ensure collapse-list JS is loaded from bundle assets
+$GLOBALS['TL_JAVASCRIPT'][] = 'bundles/dvccontaocustomcatalog/js/collapse-list.min.js|async';
+?>
+<div class="collapse-list" data-module="collapse-list" data-collapse-list=".branches-overview &gt; ul" data-active="false" data-collapsed="false">
+  <div class="mod_customcataloglist branches-overview cc_branches block">
+    <ul>
+      <?php foreach (($this->entries ?? []) as $entry):
+        $name = (string) ($entry->field('name')->value() ?? '');
+        $name = \Contao\StringUtil::decodeEntities($name);
+        $alias = (string) ($entry->field('alias')->value() ?? '');
+        $href = rtrim($base, '/') . '/' . rawurlencode($alias);
+        $title = 'Mehr Informationen zur Niederlassung ' . $name;
+        $group = (string) ($entry->field('serviceGrouping')->value() ?? '');
+        $icon = '';
+        if ($group === 'zls') { $icon = 'files/theme/v1/images/svg/zls.svg'; }
+        elseif ($group === 'zld') { $icon = 'files/theme/v1/images/svg/zld.svg'; }
+      ?>
+      <li>
+        <a href="<?= htmlspecialchars($href, ENT_QUOTES) ?>" title="<?= htmlspecialchars($title, ENT_QUOTES) ?>">
+          <?= htmlspecialchars($name, ENT_QUOTES) ?>
+          <?php if ($icon !== ''): ?>
+            <span>
+              <img src="<?= htmlspecialchars($icon, ENT_QUOTES) ?>" width="32" height="16" alt="" itemprop="image">
+            </span>
+          <?php endif; ?>
+        </a>
+      </li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  # DB migration: ensure tl_module has fields for the search module
+  DVC\ContaoCustomCatalog\Migration\EnsureModuleFieldsMigration:
+    public: true
+    tags:
+      - { name: contao.migration, priority: 0 }
+
+  DVC\ContaoCustomCatalog\Migration\UpdateLegacyModuleTypesMigration:
+    public: true
+    tags:
+      - { name: contao.migration, priority: 0 }
+
+  # Ensure tl_cc_* and tl_dvc_cc_products_config tables exist/are updated
+  DVC\ContaoCustomCatalog\Migration\EnsureTablesMigration:
+    public: true
+    tags:
+      - { name: contao.migration, priority: 0 }
+
+  # Overlay listener removed; reader is integrated server-side without subrequests
+  DVC\ContaoCustomCatalog\EventSubscriber\ReaderOutputFilterSubscriber:
+    arguments:
+      - '@request_stack'
+    public: false
+
+  DVC\ContaoCustomCatalog\EventSubscriber\ResponseReplaceSubscriber: ~
+
+  # Register insert tag resolvers
+  DVC\ContaoCustomCatalog\InsertTag\UaInsertTag: ~
+  DVC\ContaoCustomCatalog\InsertTag\RequestTokenInsertTag: ~

@@ -1,0 +1,2 @@
+<?php $this->insert('mod_cc_branch_reader_unified', ['entries' => $this->entries]); ?>
+

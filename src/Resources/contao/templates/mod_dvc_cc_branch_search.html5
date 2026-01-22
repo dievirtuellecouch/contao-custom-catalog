@@ -1,0 +1,199 @@
+<div id="dvc-cc-search-<?= htmlspecialchars((string)$this->formId, ENT_QUOTES) ?>" data-module="reload-filter" data-request-token="<?= htmlspecialchars((string)$this->requestToken, ENT_QUOTES) ?>" data-filter-control=".reload-filter-control" data-filter-list=".reload-filter-list">
+  <div class="mod_customcatalogfilter reload-filter-control branches-filter cc_products block" data-api-key="<?= htmlspecialchars((string)($this->mapsApiKey ?? ''), ENT_QUOTES) ?>">
+    <!-- indexer::stop -->
+    <div class="filterform tableless block">
+      <form action="<?= htmlspecialchars((string)$this->action, ENT_QUOTES) ?>" id="<?= htmlspecialchars((string)$this->formId, ENT_QUOTES) ?>" name="<?= htmlspecialchars((string)$this->formId, ENT_QUOTES) ?>" method="get" enctype="application/x-www-form-urlencoded">
+        <div class="formbody">
+          <div class="widget filter filter_geolocation branches_geo block">
+            <fieldset>
+              <div class="search-group">
+                <input type="text" class="field" placeholder="<?= htmlspecialchars((string)$this->searchPlaceholder, ENT_QUOTES) ?>" name="branches_geo_address" value="<?= htmlspecialchars((string)(\Contao\Input::get('branches_geo_address') ?? ''), ENT_QUOTES) ?>" autocomplete="postal-code" inputmode="numeric">
+                <input type="hidden" name="branches_lat" value="<?= htmlspecialchars((string)(\Contao\Input::get('branches_lat') ?? ''), ENT_QUOTES) ?>">
+                <input type="hidden" name="branches_lng" value="<?= htmlspecialchars((string)(\Contao\Input::get('branches_lng') ?? ''), ENT_QUOTES) ?>">
+                <button class="submit-button" type="submit" data-element="submit-button" data-state="idle">
+                  <span data-label="idle">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24.09 18.56">
+                      <path d="M0 7.28h20.57v4H0z"></path>
+                      <path d="M14.11 18.56l-3.27-3.51 6.2-5.77-6.2-5.76L14.11 0l9.98 9.28-9.98 9.28z"></path>
+                    </svg>
+                  </span>
+                  <span data-label="loading">
+                    <div class="loading-spinner">
+                      <span class="loading-spinner__rotate"></span>
+                    </div>
+                  </span>
+                  <span class="invisible">Suche starten</span>
+                </button>
+              </div>
+              <select class="select" name="branches_geo" data-element="submit-trigger">
+                <?php $opt = (string)($this->defaultRadius ?? '20'); ?>
+                <option value="10"<?= $opt==='10'?' selected':'' ?>>10 km</option>
+                <option value="20"<?= $opt==='20'?' selected':'' ?>>20 km</option>
+                <option value="50"<?= $opt==='50'?' selected':'' ?>>50 km</option>
+                <option value="100"<?= $opt==='100'?' selected':'' ?>>100 km</option>
+              </select>
+            </fieldset>
+          </div>
+        </div>
+      </form>
+    </div>
+    <!-- indexer::continue -->
+  </div>
+  <div class="mod_customcataloglist reload-filter-list branches-filter-list cc_branches block" data-ajax-reload-element="<?= htmlspecialchars((string)$this->reloadElement, ENT_QUOTES) ?>">
+    <?php if (!empty($this->hasQuery)): ?>
+      <?php $this->insert('customcatalog_branches_list_searchresult', [
+        'entries' => $this->entries,
+        'empty' => $this->empty,
+        'hasQuery' => $this->hasQuery,
+        'basePath' => $this->basePath ?? '',
+        'detailUrlPattern' => $this->detailUrlPattern ?? '',
+      ]); ?>
+    <?php endif; ?>
+  </div>
+</div>
+
+<script>
+ (function(){
+  if(!window.fetch){return;}
+  function loadMaps(api,cb){
+    if(window.google&&window.google.maps){cb();return;}
+    var s=document.createElement('script');
+    s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(api);
+    s.async=true; s.defer=true;
+    s.onload=function(){cb();};
+    s.onerror=function(){cb();};
+    document.head.appendChild(s);
+  }
+  function C(){
+    var t=this,a=null,g=null; t.elements={};
+    t.settings={stateChangeRenderThreshold:10};
+    t.state={requesting:false};
+    t.init=function(e){
+      if(!e){return;}
+      t.elements.container=e;
+      var n=e.getAttribute('data-filter-control');
+      var r=e.getAttribute('data-filter-list');
+      t.elements.control=e.querySelector(n);
+      t.elements.list=e.querySelector(r);
+      t.elements.submitButton=t.elements.control&&t.elements.control.querySelector('[data-element="submit-button"]');
+      t.settings.requestToken=e.getAttribute('data-request-token');
+      t.settings.reloadElement=t.elements.list&&t.elements.list.getAttribute('data-ajax-reload-element');
+      t.elements.form=t.elements.control&&t.elements.control.querySelector('form');
+      t.elements.submitTriggers=t.elements.control?t.elements.control.querySelectorAll('[data-element="submit-trigger"]'):[];
+      t.settings.apiKey=e.getAttribute('data-api-key')||'';
+      t.elements.addr=t.elements.form&&t.elements.form.querySelector('input[name="branches_geo_address"]');
+      t.elements.lat=t.elements.form&&t.elements.form.querySelector('input[name="branches_lat"]');
+      t.elements.lng=t.elements.form&&t.elements.form.querySelector('input[name="branches_lng"]');
+      // Auto-detect reload target if not configured
+      if(!t.settings.reloadElement){
+        var candidate=e.querySelector('.mod_customcataloglist[data-ajax-reload-element^="mod::"]')
+                    || e.querySelector('[data-ajax-reload-element^="mod::"]')
+                    || document.querySelector('.mod_customcataloglist[data-ajax-reload-element^="mod::"]')
+                    || document.querySelector('[data-ajax-reload-element^="mod::"]');
+        if(candidate){ t.settings.reloadElement=candidate.getAttribute('data-ajax-reload-element'); }
+      }
+      
+      if(!t.elements.control||!t.elements.list||!t.settings.requestToken||!t.elements.form){
+        
+        return;
+      }
+      if(!t.settings.reloadElement){
+        var candidate=e.querySelector('.mod_customcataloglist[data-ajax-reload-element^="mod::"]')
+                    || e.querySelector('[data-ajax-reload-element^="mod::"]')
+                    || document.querySelector('.mod_customcataloglist[data-ajax-reload-element^="mod::"]')
+                    || document.querySelector('[data-ajax-reload-element^="mod::"]');
+        if(candidate){ t.settings.reloadElement=candidate.getAttribute('data-ajax-reload-element'); }
+      }
+      if(!t.settings.reloadElement){
+        // attach guard to prevent navigation and inform admin
+        t.elements.form.addEventListener('submit', function(ev){ ev.preventDefault(); alert('Die Suche ist noch nicht konfiguriert. Bitte im Suchmodul die Listen‑Modul‑ID setzen oder im Listenmodul "Ajax-Reload erlauben" aktivieren.'); });
+        return;
+      }
+      t.elements.form.addEventListener('submit',t.onFormSubmit);
+      for(var i=0;i<t.elements.submitTriggers.length;i++){t.elements.submitTriggers[i].addEventListener('change',t.onFormSubmit);}
+      // No initial load; results appear only after user submits
+    };
+    t.onFormSubmit=function(e){
+      e.preventDefault();
+      var addr=t.elements.addr?t.elements.addr.value.trim():'';
+      var radEl=t.elements.form.querySelector('select[name="branches_geo"]');
+      var rad=radEl?radEl.value:'';
+      
+      var doAjax=function(){
+        var n=t.elements.form; var d=new FormData(n);
+        var u=t.makeURLWithFormData(d.entries());
+        var p=new FormData();
+        p.append('ajax_reload_element',t.settings.reloadElement);
+        p.append('REQUEST_TOKEN',t.settings.requestToken);
+        
+        t.setState('requesting',true);
+        fetch(u.href,{method:'POST',body:p,headers:{'X-Requested-With':'XMLHttpRequest'}})
+          .then(function(x){ return x.json()})
+          .then(function(x){
+            t.setState('requesting',false);
+            if(x.status==='ok'){t.updateList(x.html);} else { }
+          })
+          .catch(function(err){ t.setState('requesting',false); });
+      };
+      if(t.settings.apiKey&&addr!==''){
+        var resolve=function(){
+          try{
+            g=g||new google.maps.Geocoder();
+            
+            g.geocode({address:addr,region:'de'},function(rs,st){
+              
+              if(st==='OK'&&rs&&rs[0]&&rs[0].geometry){
+                var loc=rs[0].geometry.location;
+                var lat=(typeof loc.lat==='function'?loc.lat():loc.lat);
+                var lng=(typeof loc.lng==='function'?loc.lng():loc.lng);
+                if(t.elements.lat) t.elements.lat.value=lat;
+                if(t.elements.lng) t.elements.lng.value=lng;
+                
+              }
+              doAjax();
+            });
+          }catch(_){ doAjax(); }
+        };
+        loadMaps(t.settings.apiKey,resolve);
+        return;
+      } else {
+        
+        t.elements.lat&&(t.elements.lat.value='');
+        t.elements.lng&&(t.elements.lng.value='');
+      }
+      doAjax();
+    };
+    t.updateList=function(h){
+      if(typeof h!=='string'){ return; }
+      try{
+        var tmp=document.createElement('div');
+        tmp.innerHTML=h;
+        var inner=tmp.querySelector('.reload-filter-list');
+        if(inner){ t.elements.list.innerHTML=inner.innerHTML; }
+        else { t.elements.list.innerHTML=h; }
+        
+      }catch(e){ t.elements.list.innerHTML=h; }
+    };
+    t.render=function(){ if(t.elements.submitButton){ var s=t.state.requesting?'loading':'idle'; if(t.state.requesting){ a=setTimeout(function(){t.elements.submitButton.setAttribute('data-state',s)},t.settings.stateChangeRenderThreshold);} else { clearTimeout(a); t.elements.submitButton.setAttribute('data-state',s);} } };
+    t.setState=function(k,v){ t.state[k]=v; t.render(); };
+    t.makeURLWithFormData=function(it){ var u=new URL(location.href); var p=new URLSearchParams(u.search); for(const a of it){ var k=a[0],v=a[1]; p.append(k,v);} u.search=p.toString(); return u; };
+  }
+  function cleanStrayMarkers(el){
+    try{
+      var n=el.previousSibling;
+      while(n){
+        if(n.nodeType===3){
+          if((n.nodeValue||'').trim()==='<>'){ var rm=n; n=n.previousSibling; rm.parentNode&&rm.parentNode.removeChild(rm); continue; }
+        } else if(n.nodeType===1){
+          var txt=(n.textContent||'').trim();
+          // remove empty elements that only contain the stray marker
+          if(txt==='<>' && n.childElementCount===0){ var rmEl=n; n=n.previousSibling; rmEl.parentNode&&rmEl.parentNode.removeChild(rmEl); continue; }
+        }
+        break;
+      }
+    }catch(e){}
+  }
+  function init(){ var el=document.getElementById('dvc-cc-search-<?= htmlspecialchars((string)$this->formId, ENT_QUOTES) ?>'); if(!el){ return;} cleanStrayMarkers(el); (new C()).init(el); }
+  if(document.readyState==='interactive'||document.readyState==='complete'){ init(); } else { document.addEventListener('DOMContentLoaded',init); }
+ })();
+</script>

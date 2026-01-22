@@ -1,0 +1,45 @@
+<?php if (!$this->empty): ?>
+<ul>
+  <?php foreach ($this->entries as $entry):
+    $name = $entry->field('name')->value();
+    $alias = (string) ($entry->field('alias')->value() ?? '');
+    $id    = (string) ($entry->field('id')->value() ?? '');
+    $slug  = $alias !== '' ? $alias : $id;
+    $base = (string) ($this->basePath ?? '');
+    $href = $base !== '' ? rtrim($base, '/') . '/' . rawurlencode($slug) : $entry->links('detail')->url;
+  ?>
+  <li>
+    <div class="branches-filter-list-wrapper">
+      <div class="branches-filter-list__subheadline">
+        <h3 class="branches-filter-list__subheadline subheadline subheadline_default"><?= htmlspecialchars((string)$name, ENT_QUOTES) ?></h3>
+      </div>
+      <div class="branches-filter-list__content">
+        <div class="branches-filter-list__content-wrapper">
+          <p>
+            <?= htmlspecialchars((string)($entry->field('addressTitle')->value() ?? ''), ENT_QUOTES) ?><br>
+            <?= htmlspecialchars((string)($entry->field('address')->option('street') ?? ''), ENT_QUOTES) ?><br>
+            <?= htmlspecialchars((string)($entry->field('address')->option('zipcode') ?? ''), ENT_QUOTES) ?> <?= htmlspecialchars((string)($entry->field('address')->option('city') ?? ''), ENT_QUOTES) ?>
+          </p>
+        </div>
+      </div>
+      <p class="more">
+        <a class="button button_arrow button-color_white" href="<?= htmlspecialchars((string)$href, ENT_QUOTES) ?>">Details</a>
+      </p>
+    </div>
+  </li>
+  <?php endforeach; ?>
+</ul>
+<?php else: ?>
+  <?php $hasSearchQuery = (\Contao\Input::get('branches_geo_address') !== null); ?>
+  <?php if ($hasSearchQuery): ?>
+  <ul>
+    <li>
+      <div class="branches-filter-list-wrapper">
+        <div class="branches-filter-list-info">
+          <p>Leider wurden keine Niederlassungen gefunden.</p>
+        </div>
+      </div>
+    </li>
+  </ul>
+  <?php endif; ?>
+<?php endif; ?>
