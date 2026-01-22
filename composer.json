@@ -1,9 +1,17 @@
 {
   "name": "dvc/contao-custom-catalog",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Custom Catalog (branches, products, persons) for Contao 5.3",
   "type": "contao-bundle",
-  "license": "LGPL-3.0+",
+  "license": "LGPL-3.0-or-later",
+  "homepage": "https://github.com/dievirtuellecouch/contao-custom-catalog",
+  "keywords": ["contao", "bundle", "custom catalog", "catalog", "contao5"],
+  "authors": [
+    {
+      "name": "dievirtuellecouch GmbH",
+      "homepage": "https://www.dievirtuellecouch.de"
+    }
+  ],
   "require": {
     "php": ">=8.1",
     "contao/core-bundle": "^5.3"
@@ -20,4 +28,3 @@
     "contao-manager-plugin": "DVC\\ContaoCustomCatalog\\ContaoManager\\Plugin"
   }
 }
-
