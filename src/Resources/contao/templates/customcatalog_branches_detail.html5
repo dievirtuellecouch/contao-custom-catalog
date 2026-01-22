@@ -1,0 +1,148 @@
+<?php
+// Safe wrapper: only iterate if entries exist
+if (!isset($this->entries) || empty($this->entries)) {
+    return;
+}
+?>
+<?php foreach ($this->entries as $entry): ?>
+<?php
+  $name = $entry->field('name')->value();
+  // Robustly decode possibly double-encoded entities, then escape for HTML
+  $rawName = (string) $name;
+  $__prev = null; $__i = 0;
+  while ($rawName !== $__prev && $__i < 3) {
+    $__prev = $rawName;
+    $rawName = html_entity_decode($rawName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $__i++;
+  }
+  $nameText = htmlspecialchars($rawName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+  $openingHoursTable = $entry->field('openingHours')->html();
+  $importantNotice = $entry->field('importantNotice')->html();
+  $contactEmailAddress = $entry->field('contactEmail')->value();
+  $contactPhoneNumber = $entry->field('contactPhone')->value();
+  $mapLatLng = $entry->field('address')->value();
+  $mapLink = $entry->field('mapLink')->value();
+  $mapTitle = $rawName;
+  $mapStreet = $entry->field('address_street')->value();
+  $mapZip = $entry->field('address_zipcode')->value();
+  $mapCity = $entry->field('address_city')->value();
+  $optHeadline = $entry->field('überschrift')->value();
+  if (!$mapLink) {
+      $mapLink = 'https://www.google.de/maps/place/' . $mapStreet . '+' . $mapZip . '+' . $mapCity;
+  }
+  $branchHeadline = $optHeadline ?: sprintf('EHA Autoschilder %s - Kennzeichen u. Zulassungsservice', $rawName);
+?>
+<section class="s_d-default text">
+  <div class="site-width">
+    <div class="branches-detail">
+      <div class="c-intro">
+        <div class="c-intro__left">
+          <h1 class="headline headline_default headline_default_feature"><?= htmlspecialchars($branchHeadline, ENT_QUOTES | ENT_HTML5, 'UTF-8'); ?></h1>
+          <?php if (!empty($importantNotice)) echo $importantNotice; ?>
+          <div class="ce_text">
+            <?php $this->insert('customcatalog_branches_partial_address', ['entry' => $entry]); ?>
+          </div>
+          <?php if ($contactPhoneNumber || $contactEmailAddress): ?>
+          <div class="button-group button-group_inline">
+            <?php if ($contactPhoneNumber): ?>
+            <?php $telStandardTag = sprintf('{{phone::%s::standard}}', $contactPhoneNumber); ?>
+            <div class="button button_default button-color_pink block">
+              <a href="tel:<?= $telStandardTag ?>" class="hyperlink_txt" title="Niederlassung <?= $nameText ?> anrufen">Telefon <?= htmlspecialchars((string)$contactPhoneNumber, ENT_QUOTES | ENT_HTML5, 'UTF-8') ?></a>
+            </div>
+            <?php endif; ?>
+            <?php if ($contactEmailAddress): ?>
+            <div class="button button_default button-color_pink block">
+              <a href="<?= \Contao\StringUtil::encodeEmail(sprintf('mailto:%s', $contactEmailAddress)) ?>" class="hyperlink_txt" title="E-Mail an Niederlassung <?= $nameText ?>"><?= \Contao\StringUtil::encodeEmail($contactEmailAddress) ?></a>
+            </div>
+            <?php endif; ?>
+          </div>
+          <?php endif; ?>
+
+          <h3 class="headline">Öffnungszeiten</h3>
+          <div class="ce_text table-opening-hours"><?= $openingHoursTable ?></div>
+
+          <h3 class="headline">Zahlungs&shy;möglichkeiten</h3>
+          <div class="payments">
+            <div class="payments__item">{{image::6dccdb5e-6611-11eb-b580-b42e99481670?width=460&height=50}}</div>
+          </div>
+        </div>
+        <div class="c-intro__right">
+          <h2 class="headline headline_default headline_default_feature">Produkte der Niederlassung <?= $nameText ?></h2>
+          <?php
+            $productsVal = $entry->field('availableProducts')->value();
+            $productIds = is_array($productsVal) ? $productsVal : \Contao\StringUtil::deserialize($productsVal, true);
+            $productIds = array_values(array_filter(array_map('intval', (array)$productIds)));
+            $products = null;
+            $byId = [];
+            if (!empty($productIds)) {
+                $products = \DVC\ContaoCustomCatalog\Model\ProductModel::findMultipleByIds($productIds);
+                if ($products) {
+                    foreach ($products as $pp) { $byId[(int)$pp->id] = $pp; }
+                }
+            }
+          ?>
+          <?php if (!empty($productIds) && !empty($byId)): ?>
+          <div class="mod_customcataloglist cc_products block" data-module="cc-products-accordion">
+            <div class="accordion-group">
+              <?php $__idx = 0; foreach ($productIds as $pid): if (!isset($byId[$pid])) continue; $p = $byId[$pid]; $pName = $p->title ?: $p->name; $__idx++; ?>
+              <section class="ce_accordion block js">
+                <div class="toggler toggler_default">
+                  <span class="toggler__headline"><?= htmlspecialchars((string)$pName, ENT_QUOTES | ENT_HTML5, 'UTF-8') ?></span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="24" data-name="Ebene 1" viewBox="0 0 18.56 24.09">
+                    <path fill="#fff" d="M7.28 0h4v20.57h-4z"></path>
+                    <path fill="#fff" d="M9.28 24.09L0 14.11l3.52-3.27 5.76 6.2 5.77-6.2 3.51 3.27-9.28 9.98z"></path>
+                  </svg>
+                </div>
+                <div class="accordion accordion-content_default">
+                  <div>
+                    <div class="ce_textarea attribute textarea"><?php
+                      $html = (string)($p->description ?? '');
+                      try {
+                        $parser = \Contao\System::getContainer()->get('contao.insert_tag.parser');
+                        $html = $parser->replace($html, false);
+                      } catch (\Throwable) {}
+                      echo $html;
+                    ?></div>
+                  </div>
+                </div>
+              </section>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <script>
+          (function(){
+            var root=document.currentScript&&document.currentScript.previousElementSibling;
+            if(!root||!root.matches('.cc_products')){root=document.querySelector('.cc_products');}
+            if(!root) return;
+            var items=root.querySelectorAll('.ce_accordion');
+            items.forEach(function(item,idx){
+              var toggler=item.querySelector('.toggler');
+              var content=toggler&&toggler.nextElementSibling;
+              if(!toggler||!content) return;
+              var expanded = item.classList.contains('expanded') || !!content.getAttribute('style');
+              content.style.maxHeight = expanded ? (content.scrollHeight + 'px') : '0px';
+              toggler.addEventListener('click',function(e){
+                var isExpanded=item.classList.contains('expanded');
+                if(isExpanded){
+                  item.classList.remove('expanded');
+                  content.style.maxHeight='0px';
+                } else {
+                  item.classList.add('expanded');
+                  content.style.maxHeight=content.scrollHeight+'px';
+                }
+              });
+            });
+          })();
+          </script>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+    <div class="c-googlemap">
+      <?php $this->insert('customcatalog_partial_googlemap', [ 'latLng' => $mapLatLng, 'link' => $mapLink, 'title' => $mapTitle ]); ?>
+    </div>
+  </div>
+</section>
+<?php endforeach; ?>
+

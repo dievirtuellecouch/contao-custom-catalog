@@ -15,8 +15,8 @@ $GLOBALS['TL_JAVASCRIPT'][] = 'bundles/dvccontaocustomcatalog/js/collapse-list.m
           $title = 'Mehr Informationen zur Niederlassung ' . $name;
           $group = (string) ($entry->field('serviceGrouping')->value() ?? '');
           $icon = '';
-          if ($group === 'zls') { $icon = 'files/theme/v1/images/svg/zls.svg'; }
-          elseif ($group === 'zld') { $icon = 'files/theme/v1/images/svg/zld.svg'; }
+          if ($group === 'zls') { $icon = 'bundles/dvccontaocustomcatalog/images/zls.svg'; }
+          elseif ($group === 'zld') { $icon = 'bundles/dvccontaocustomcatalog/images/zld.svg'; }
         ?>
         <li>
           <a href="<?= htmlspecialchars($href, ENT_QUOTES) ?>" title="<?= htmlspecialchars($title, ENT_QUOTES) ?>">

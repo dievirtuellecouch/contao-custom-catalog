@@ -1,0 +1,10 @@
+<?php
+// Expects $this->entry (EntryWrapper)
+$entry = $this->entry;
+$zipcodeAndCity = [ $entry->field('address')->option('zipcode'), $entry->field('address')->option('city') ];
+$zipcodeAndCity = array_filter($zipcodeAndCity, fn($p) => !empty($p));
+$addressParts = [ $entry->field('addressTitle')->value(), $entry->field('address')->option('street'), join(' ', $zipcodeAndCity) ];
+$addressParts = array_filter($addressParts, fn($p) => !empty($p));
+?>
+<p><?= join('<br>', $addressParts) ?></p>
+

@@ -4,13 +4,43 @@ if (!isset($this->entries) || empty($this->entries)) {
     echo '<div class="ce_text">Kein Eintrag gefunden.</div>';
     return;
 }
+// Helper: robustes Entitäten-Decoding (auch doppelt encodierte Fälle)
+if (!function_exists('dvc_decode_entities')) {
+    function dvc_decode_entities(string $s): string {
+        $__prev = null; $__i = 0;
+        while ($s !== $__prev && $__i < 3) {
+            $__prev = $s;
+            $s = html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $__i++;
+        }
+        return $s;
+    }
+}
 ?>
 <div class="mod_customcatalogreader cc_branches block">
 <?php foreach ($this->entries as $entry): ?>
 <?php
   $name = (string) ($entry->field('name')->value() ?? '');
+  // Decode possible double-encoded entities and numeric references, then escape
+  $tmpName = htmlspecialchars_decode($name, ENT_QUOTES | ENT_HTML5);
+  if (function_exists('mb_decode_numericentity')) {
+      $tmpName = mb_decode_numericentity($tmpName, [0x0, 0x2FFFF, 0, 0xFFFF], 'UTF-8');
+  } else {
+      $tmpName = preg_replace_callback('/&#(x?[0-9A-Fa-f]+);/i', function($m){
+          $v = $m[1];
+          if ($v && ($v[0] === 'x' || $v[0] === 'X')) {
+              $hex = substr($v, 1);
+              $code = hexdec($hex);
+          } else {
+              $code = (int) $v;
+          }
+          return ($code > 0) ? html_entity_decode('&#'.$code.';', ENT_QUOTES | ENT_HTML5, 'UTF-8') : $m[0];
+      }, $tmpName);
+  }
+  $nameText = htmlspecialchars($tmpName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
   $customHeadline = (string) ($entry->field('überschrift')->value() ?? '');
-  $headline = $customHeadline !== '' ? $customHeadline : ('EHA Autoschilder '.$name.' - Kennzeichen u. Zulassungsservice');
+  $headlineRaw = $customHeadline !== '' ? $customHeadline : ('EHA Autoschilder '.$tmpName.' - Kennzeichen u. Zulassungsservice');
+  $headline = htmlspecialchars($headlineRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
   $addressTitle = (string) ($entry->field('addressTitle')->value() ?? '');
   $street = (string) ($entry->field('address')->option('street') ?? '');
   $zip = (string) ($entry->field('address')->option('zipcode') ?? '');
@@ -24,8 +54,8 @@ if (!isset($this->entries) || empty($this->entries)) {
       $data = @unserialize($openingRaw);
       if (is_array($data)) { $rows = $data; }
   }
-  // Zahlungen Bild (statisch wie Vorgabe)
-  $paymentImg = 'assets/images/2/EHA%20Niederlassungen%20Bilder%2020210201v05-713a83a2.png';
+  // Zahlungen Bild: nutze Bundle-Asset als Default
+  $paymentImg = 'bundles/dvccontaocustomcatalog/images/payments.svg';
   // Produkte (Accordion) aus availableProducts
   $productsVal = $entry->field('availableProducts')->value();
   $productIds = is_array($productsVal) ? $productsVal : \Contao\StringUtil::deserialize($productsVal, true);
@@ -67,19 +97,43 @@ if (!isset($this->entries) || empty($this->entries)) {
     <div class="branches-detail">
       <div class="c-intro">
         <div class="c-intro__left">
-      <h1 class="headline headline_default headline_default_feature"><?= htmlspecialchars($headline, ENT_QUOTES) ?></h1>
+      <h1 class="headline headline_default headline_default_feature"><?= $headline ?></h1>
+      <?php
+        // Wichtiger Hinweis unter der Überschrift aus Backend-Einstellungen
+        $important = (string) ($entry->field('importantNotice')->value() ?? '');
+        if (trim($important) !== '') {
+            try { $parser = \Contao\System::getContainer()->get('contao.insert_tag.parser'); $important = $parser->replace($important, false); } catch (\Throwable) {}
+            // Ersetze bekannte Platzhalter wie in anderen Textbereichen
+            $important = str_replace([
+                '[-]',
+                '[gt]',
+                '[nbsp]'
+            ], [
+                '&shy;',
+                '>',
+                '&nbsp;'
+            ], $important);
+            // HTML-Entitäten dekodieren (auch mehrfach encodierte)
+            $important = dvc_decode_entities($important);
+            // Falls kein HTML vorhanden ist, in <p> einbetten und escapen
+            if (strpos($important, '<') === false) {
+                $important = '<p>'.htmlspecialchars($important, ENT_QUOTES | ENT_HTML5, 'UTF-8').'</p>';
+            }
+            echo '<div class="ce_textarea attribute textarea">'.$important.'</div>';
+        }
+      ?>
       <div class="ce_text">
         <p><?= htmlspecialchars($addressTitle, ENT_QUOTES) ?><br><?= htmlspecialchars($street, ENT_QUOTES) ?><br><?= htmlspecialchars($zip.' '.$city, ENT_QUOTES) ?></p>
       </div>
       <div class="button-group button-group_inline">
         <?php if ($contactPhone): $tel = preg_replace('/[^+0-9]/','', (string)$contactPhone); ?>
         <div class="button button_default button-color_pink block">
-          <a href="tel:<?= htmlspecialchars($tel, ENT_QUOTES) ?>" class="hyperlink_txt" title="Niederlassung <?= htmlspecialchars($name, ENT_QUOTES) ?> anrufen">Telefon <?= htmlspecialchars($contactPhone, ENT_QUOTES) ?></a>
+          <a href="tel:<?= htmlspecialchars($tel, ENT_QUOTES) ?>" class="hyperlink_txt" title="Niederlassung <?= $nameText ?> anrufen">Telefon <?= htmlspecialchars($contactPhone, ENT_QUOTES) ?></a>
         </div>
         <?php endif; ?>
         <?php if ($contactEmail): ?>
         <div class="button button_default button-color_pink block">
-          <a href="<?= \Contao\StringUtil::encodeEmail(sprintf('mailto:%s', $contactEmail)) ?>" class="hyperlink_txt" title="E-Mail an Niederlassung <?= htmlspecialchars($name, ENT_QUOTES) ?>"><?= \Contao\StringUtil::encodeEmail($contactEmail) ?></a>
+          <a href="<?= \Contao\StringUtil::encodeEmail(sprintf('mailto:%s', $contactEmail)) ?>" class="hyperlink_txt" title="E-Mail an Niederlassung <?= $nameText ?>"><?= \Contao\StringUtil::encodeEmail($contactEmail) ?></a>
         </div>
         <?php endif; ?>
       </div>
@@ -136,7 +190,7 @@ if (!isset($this->entries) || empty($this->entries)) {
       </div>
     </div>
         <div class="c-intro__right">
-      <h2 class="headline headline_default headline_default_feature">Produkte der Niederlassung <?= htmlspecialchars($name, ENT_QUOTES) ?></h2>
+      <h2 class="headline headline_default headline_default_feature">Produkte der Niederlassung <?= $nameText ?></h2>
       <div class="mod_customcataloglist cc_products block">
         <div class="accordion-group">
           <?php foreach ($productIds as $pid): if (!isset($byId[$pid])) continue; $p=$byId[$pid]; $pName = $p->title ?: $p->name; ?>
@@ -163,6 +217,8 @@ if (!isset($this->entries) || empty($this->entries)) {
                       '>',
                       '&nbsp;'
                   ], $html);
+                  // HTML-Entitäten dekodieren (auch mehrfach encodierte)
+                  $html = dvc_decode_entities($html);
                   echo $html;
                 ?></div>
               </div>
@@ -285,7 +341,7 @@ if (!isset($this->entries) || empty($this->entries)) {
     <div class="mod_customcataloglist cc_persons block">
       <div class="c-intro">
         <div class="c-intro__left">
-          <h3 class="headline headline_default headline_default_feature">Gebietsleiter für <?= htmlspecialchars($name, ENT_QUOTES) ?></h3>
+          <h3 class="headline headline_default headline_default_feature">Gebietsleiter für <?= $nameText ?></h3>
           <div class="ce_text block">
             <p><?= htmlspecialchars($pName, ENT_QUOTES) ?><br><?= htmlspecialchars($pJob, ENT_QUOTES) ?></p>
           </div>

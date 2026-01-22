@@ -1,0 +1,17 @@
+<?php [$lat,$lng] = array_map('trim', explode(',', (string)($this->latLng ?? '0,0'), 2)); ?>
+<div class="google-map branch-map" style="position: relative; overflow: hidden; width: 100%; height: 300px;">
+  <div class="external-script-placeholder site-width" data-module="external-script-placeholder">
+    <div class="ce_text block" style="text-align:center">
+      <p>Die Google Map wird nur mit aktivierten Cookies geladen.</p>
+      <p><a class="ccb-trigger" href="javascript:;" rel="noreferrer noopener">Privatsphäre-Einstellungen ändern</a></p>
+    </div>
+  </div>
+  <script type="application/json" data-config>
+    <?= json_encode([
+      'center' => ['lat' => (float)$lat, 'lng' => (float)$lng],
+      'zoom' => 10,
+      'markers' => [ ['lat' => (float)$lat, 'lng' => (float)$lng, 'title' => (string)($this->title ?? ''), 'url' => (string)($this->link ?? '')] ],
+    ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) ?>
+  </script>
+</div>
+

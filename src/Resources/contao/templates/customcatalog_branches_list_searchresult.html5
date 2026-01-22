@@ -1,37 +1,62 @@
-<?php if (!$this->empty): ?>
-<ul>
-  <?php foreach ($this->entries as $entry):
-    $name = $entry->field('name')->value();
-    $alias = (string) ($entry->field('alias')->value() ?? '');
-    $id    = (string) ($entry->field('id')->value() ?? '');
-    $slug  = $alias !== '' ? $alias : $id;
-    $base = (string) ($this->basePath ?? '');
-    $href = $base !== '' ? rtrim($base, '/') . '/' . rawurlencode($slug) : $entry->links('detail')->url;
-  ?>
-  <li>
-    <div class="branches-filter-list-wrapper">
-      <div class="branches-filter-list__subheadline">
-        <h3 class="branches-filter-list__subheadline subheadline subheadline_default"><?= htmlspecialchars((string)$name, ENT_QUOTES) ?></h3>
-      </div>
-      <div class="branches-filter-list__content">
-        <div class="branches-filter-list__content-wrapper">
-          <p>
-            <?= htmlspecialchars((string)($entry->field('addressTitle')->value() ?? ''), ENT_QUOTES) ?><br>
-            <?= htmlspecialchars((string)($entry->field('address')->option('street') ?? ''), ENT_QUOTES) ?><br>
-            <?= htmlspecialchars((string)($entry->field('address')->option('zipcode') ?? ''), ENT_QUOTES) ?> <?= htmlspecialchars((string)($entry->field('address')->option('city') ?? ''), ENT_QUOTES) ?>
-          </p>
+<?php
+// Vereinheitlichtes Ergebnis-Template (wie Listen-Template), inkl. Service-Icon und Button
+if (!$this->empty):
+  $base = (string) ($this->basePath ?? '');
+?>
+  <ul>
+    <?php foreach ($this->entries as $entry):
+      $name  = (string) ($entry->field('name')->value() ?? '');
+      $name  = \Contao\StringUtil::decodeEntities($name);
+      $alias = (string) ($entry->field('alias')->value() ?? '');
+      $slug  = $alias !== '' ? $alias : (string)($entry->field('id')->value() ?? '');
+      $href  = rtrim($base, '/') . '/' . rawurlencode($slug);
+      $title = 'Mehr Informationen zur Niederlassung ' . $name;
+      $group = (string) ($entry->field('serviceGrouping')->value() ?? '');
+      $icon  = '';
+      if ($group === 'zls') { $icon = 'bundles/dvccontaocustomcatalog/images/zls.svg'; }
+      elseif ($group === 'zld') { $icon = 'bundles/dvccontaocustomcatalog/images/zld.svg'; }
+
+      $addrTitle = (string) ($entry->field('addressTitle')->value() ?? '');
+      $street    = (string) ($entry->field('address')->option('street') ?? '');
+      $zip       = (string) ($entry->field('address')->option('zipcode') ?? '');
+      $city      = (string) ($entry->field('address')->option('city') ?? '');
+    ?>
+    <li>
+      <div class="branches-filter-list-wrapper">
+        <div class="branches-filter-list__subheadline">
+          <h3 class="branches-filter-list__subheadline subheadline subheadline_default"><?= htmlspecialchars($name, ENT_QUOTES) ?></h3>
+          <span>
+            <?php if ($icon !== ''): ?>
+              <img src="<?= htmlspecialchars($icon, ENT_QUOTES) ?>" width="32" height="16" alt="" itemprop="image">
+            <?php endif; ?>
+          </span>
+        </div>
+        <div class="branches-filter-list__content">
+          <div class="branches-filter-list__content-wrapper">
+            <p>
+              <?= htmlspecialchars($addrTitle, ENT_QUOTES) ?><br>
+              <?= htmlspecialchars($street, ENT_QUOTES) ?><br>
+              <?= htmlspecialchars($zip.' '.$city, ENT_QUOTES) ?>
+            </p>
+          </div>
+        </div>
+
+        <div class="button button_arrow button-color_white block">
+          <a href="<?= htmlspecialchars($href, ENT_QUOTES) ?>" class="hyperlink_txt" title="<?= htmlspecialchars($title, ENT_QUOTES) ?>">
+            <span>Zur Niederlassung</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24.09 18.56">
+              <path d="M0 7.28h20.57v4H0z"></path>
+              <path d="M14.11 18.56l-3.27-3.51 6.2-5.77-6.2-5.76L14.11 0l9.98 9.28-9.98 9.28z"></path>
+            </svg>
+          </a>
         </div>
       </div>
-      <p class="more">
-        <a class="button button_arrow button-color_white" href="<?= htmlspecialchars((string)$href, ENT_QUOTES) ?>">Details</a>
-      </p>
-    </div>
-  </li>
-  <?php endforeach; ?>
-</ul>
-<?php else: ?>
-  <?php $hasSearchQuery = (\Contao\Input::get('branches_geo_address') !== null); ?>
-  <?php if ($hasSearchQuery): ?>
+    </li>
+    <?php endforeach; ?>
+  </ul>
+<?php else:
+  $hasSearchQuery = (\Contao\Input::get('branches_geo_address') !== null);
+  if ($hasSearchQuery): ?>
   <ul>
     <li>
       <div class="branches-filter-list-wrapper">
