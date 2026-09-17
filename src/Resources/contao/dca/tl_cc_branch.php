@@ -26,7 +26,7 @@ $GLOBALS['TL_DCA']['tl_cc_branch'] = [
     ],
     'palettes' => [
         '__selector__' => [],
-        'default' => '{title_legend},name,überschrift,alias;{meta_legend},metaTitle,metaDescription,metaRobots;{address_legend},addressTitle,address,address_street,address_zipcode,address_city,contactAdditionText;{opening_legend},openingHours;{zusatzinformationen_legend},mapLink,importantNotice;{contact_legend},contactEmail,contactPhone;{business_legend},serviceGrouping,availableProducts;{gallery_legend},gallerySources;{ansprechpartner_legend},contactPerson;{publish_legend},published',
+        'default' => '{title_legend},name,headline,alias;{meta_legend},metaTitle,metaDescription,metaRobots;{address_legend},addressTitle,address,address_street,address_zipcode,address_city,contactAdditionText;{opening_legend},openingHours;{zusatzinformationen_legend},mapLink,importantNotice;{contact_legend},contactEmail,contactPhone;{business_legend},serviceGrouping,availableProducts;{gallery_legend},gallerySources;{ansprechpartner_legend},contactPerson;{publish_legend},published',
     ],
     'fields' => [
         'id' => [ 'sql' => ['type'=>'integer','unsigned'=>true,'autoincrement'=>true] ],
@@ -37,7 +37,7 @@ $GLOBALS['TL_DCA']['tl_cc_branch'] = [
             'eval' => ['mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50'],
             'sql' => ['type'=>'string','length'=>255,'default'=>''],
         ],
-        'überschrift' => [
+        'headline' => [
             'inputType' => 'text',
             'eval' => ['maxlength'=>255, 'tl_class'=>'w50'],
             'sql' => ['type'=>'string','length'=>255,'default'=>''],

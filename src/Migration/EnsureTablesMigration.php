@@ -26,8 +26,17 @@ class EnsureTablesMigration implements MigrationInterface
                 : $this->connection->getSchemaManager();
 
             $names = array_map('strtolower', $sm->listTableNames());
-            foreach (['tl_cc_branch','tl_cc_product','tl_cc_person'] as $t) {
+            foreach (['tl_cc_branch','tl_cc_product','tl_cc_person','tl_dvc_cc_products_config'] as $t) {
                 if (!in_array(strtolower($t), $names, true)) {
+                    return true;
+                }
+            }
+            foreach ([
+                'tl_cc_branch' => ['addresstitle', 'published'],
+                'tl_cc_product' => ['title', 'titleaddition'],
+                'tl_cc_person' => ['contactemaillinktext', 'contactemailtitletext', 'contacttelephonelinktext', 'contacttelephonetitletext', 'contentimagealt'],
+            ] as $table => $required) {
+                if (array_diff($required, array_keys($sm->listTableColumns($table)))) {
                     return true;
                 }
             }
@@ -65,7 +74,7 @@ class EnsureTablesMigration implements MigrationInterface
             $t->addColumn('name','string',['length'=>255,'default'=>'']);
             // align with DCA: alias VARCHAR(128) NOT NULL DEFAULT ''
             $t->addColumn('alias','string',['length'=>128,'default'=>'']);
-            $t->addColumn('überschrift','string',['length'=>255,'default'=>'']);
+            $t->addColumn('headline','string',['length'=>255,'default'=>'']);
             $t->addColumn('addressTitle','string',['length'=>255,'default'=>'']);
             $t->addColumn('metaTitle','string',['length'=>255,'default'=>'']);
             $t->addColumn('metaDescription','text',['notnull'=>false]);
@@ -79,7 +88,7 @@ class EnsureTablesMigration implements MigrationInterface
             $t->addColumn('address_zipcode','string',['length'=>32,'default'=>'']);
             $t->addColumn('address_city','string',['length'=>128,'default'=>'']);
             $t->addColumn('mapLink','string',['length'=>255,'default'=>'']);
-            $t->addColumn('serviceGrouping','string',['length'=>32,'default'=>'']);
+            $t->addColumn('serviceGrouping','string',['length'=>64,'default'=>'']);
             // align with DCA: BLOB NULL
             $t->addColumn('openingHours','blob',['notnull'=>false]);
             $t->addColumn('importantNotice','text',['notnull'=>false]);
@@ -95,17 +104,12 @@ class EnsureTablesMigration implements MigrationInterface
                 if (!isset($cols['addresstitle'])) {
                     $this->connection->executeStatement("ALTER TABLE tl_cc_branch ADD addressTitle VARCHAR(255) NOT NULL DEFAULT ''");
                 }
-                // ensure alias column length and nullability match DCA (VARCHAR(128) NOT NULL DEFAULT '')
-                try {
-                    $this->connection->executeStatement("ALTER TABLE tl_cc_branch MODIFY alias VARCHAR(128) NOT NULL DEFAULT ''");
-                } catch (\Throwable) {}
-                if (isset($cols['openinghours'])) {
-                    $this->connection->executeStatement("ALTER TABLE tl_cc_branch MODIFY openingHours BLOB NULL");
-                }
                 if (!isset($cols['published'])) {
                     $this->connection->executeStatement("ALTER TABLE tl_cc_branch ADD published TINYINT(1) NOT NULL DEFAULT 1");
                 }
-            } catch (\Throwable) {}
+            } catch (\Throwable $e) {
+                return new MigrationResult(false, 'Could not update catalog columns: '.$e->getMessage());
+            }
         }
 
         if (!in_array('tl_cc_product', $existing, true)) {
@@ -132,7 +136,9 @@ class EnsureTablesMigration implements MigrationInterface
                 if (!isset($cols['titleaddition'])) {
                     $this->connection->executeStatement("ALTER TABLE tl_cc_product ADD titleAddition VARCHAR(255) NOT NULL DEFAULT ''");
                 }
-            } catch (\Throwable) {}
+            } catch (\Throwable $e) {
+                return new MigrationResult(false, 'Could not update catalog columns: '.$e->getMessage());
+            }
         }
 
         if (!in_array('tl_cc_person', $existing, true)) {
@@ -172,7 +178,9 @@ class EnsureTablesMigration implements MigrationInterface
                 if (!isset($cols['contentimagealt'])) {
                     $this->connection->executeStatement("ALTER TABLE tl_cc_person ADD contentImageAlt VARCHAR(255) NOT NULL DEFAULT ''");
                 }
-            } catch (\Throwable) {}
+            } catch (\Throwable $e) {
+                return new MigrationResult(false, 'Could not update catalog columns: '.$e->getMessage());
+            }
         }
 
         $sql = $schema->toSql($this->connection->getDatabasePlatform());

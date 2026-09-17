@@ -66,7 +66,7 @@ class ModuleBranchSearch extends Module
         if ($hasQuery) {
             $center = null;
             if (is_numeric($latParam) && is_numeric($lngParam)) {
-                $center = [floatval($latParam), floatval($lngParam)];
+                $center = \DVC\ContaoCustomCatalog\Util\Coordinates::pair($latParam, $lngParam);
             }
             if (!$center && $geo !== '') {
                 $zip = null;
@@ -159,23 +159,7 @@ class ModuleBranchSearch extends Module
 
     private static function extractLatLng(object $model): ?array
     {
-        try {
-            $raw = (string) ($model->address ?? '');
-            if ($raw !== '') {
-                if (strpos($raw, ',') !== false) {
-                    [$la, $lo] = array_map('trim', explode(',', $raw, 2));
-                    if ($la !== '' && $lo !== '') { return [floatval($la), floatval($lo)]; }
-                }
-                if (preg_match('~^a:\\d+:\\{.*\\}$~s', $raw)) {
-                    $arr = @unserialize($raw);
-                    if (is_array($arr) && isset($arr[0], $arr[1])) { return [floatval($arr[0]), floatval($arr[1])]; }
-                }
-            }
-        } catch (\Throwable) {}
-        if (isset($model->address_lat, $model->address_lng) && is_numeric($model->address_lat) && is_numeric($model->address_lng)) {
-            return [floatval($model->address_lat), floatval($model->address_lng)];
-        }
-        return null;
+        return \DVC\ContaoCustomCatalog\Util\Coordinates::fromModel($model);
     }
 
     private static function haversine(float $lat1, float $lon1, float $lat2, float $lon2): float
@@ -184,6 +168,7 @@ class ModuleBranchSearch extends Module
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
         $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+        $a = max(0.0, min(1.0, $a));
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $R * $c;
     }

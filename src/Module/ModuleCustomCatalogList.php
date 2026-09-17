@@ -20,10 +20,6 @@ class ModuleCustomCatalogList extends Module
         if ($where !== '') {
             $collection = BranchModel::findBy(['published=?', $where], [1], $options) ?: [];
             $entries = self::toArray($collection);
-            if (empty($entries)) {
-                $collection = BranchModel::findBy(['published=?'], [1], $options) ?: [];
-                $entries = self::toArray($collection);
-            }
         } else {
             $geo = (string) (\Contao\Input::get('branches_geo_address') ?? '');
             $radius = (float) (\Contao\Input::get('branches_geo') ?? 0);
@@ -31,10 +27,10 @@ class ModuleCustomCatalogList extends Module
             $latParam = \Contao\Input::get('branches_lat');
             $lngParam = \Contao\Input::get('branches_lng');
             if (is_numeric($latParam) && is_numeric($lngParam)) {
-                $center = [floatval($latParam), floatval($lngParam)];
+                $center = \DVC\ContaoCustomCatalog\Util\Coordinates::pair($latParam, $lngParam);
             }
 
-            if ($geo !== '') {
+            if ($geo !== '' || $center !== null) {
                 // Try to determine a center coordinate based on an exact zipcode or city match
                 $zip = null;
                 if (preg_match('~(\d{4,5})~', $geo, $m)) {
@@ -47,7 +43,7 @@ class ModuleCustomCatalogList extends Module
                 if (!$centerModel) {
                     $centerModel = BranchModel::findOneBy(['published=? AND address_city=?'], [1, $geo]);
                 }
-                if ($centerModel) {
+                if (!$center && $centerModel) {
                     $center = self::extractLatLng($centerModel);
                 }
                 // If no center yet (no API key geocode or no exact match), approximate from LIKE matches
@@ -57,7 +53,7 @@ class ModuleCustomCatalogList extends Module
                         'published=?',
                         '(address_zipcode LIKE ? OR address_city LIKE ?)'
                     ], [1, $like, $like]) ?: [];
-                    $approxEntries = iterator_to_array($approx);
+                    $approxEntries = self::toArray($approx);
                     $coords = [];
                     foreach ($approxEntries as $row) {
                         $c = self::extractLatLng($row);
@@ -137,25 +133,7 @@ class ModuleCustomCatalogList extends Module
 
     private static function extractLatLng(object $model): ?array
     {
-        try {
-            $raw = (string) ($model->address ?? '');
-            if ($raw !== '') {
-                if (strpos($raw, ',') !== false) {
-                    [$la, $lo] = array_map('trim', explode(',', $raw, 2));
-                    if ($la !== '' && $lo !== '') { return [floatval($la), floatval($lo)]; }
-                }
-                // Serialized array [lat, lng]
-                if (preg_match('~^a:\\d+:\\{.*\\}$~s', $raw)) {
-                    $arr = @unserialize($raw);
-                    if (is_array($arr) && isset($arr[0], $arr[1])) { return [floatval($arr[0]), floatval($arr[1])]; }
-                }
-            }
-        } catch (\Throwable) {}
-        // Alternative: dedicated columns address_lat/address_lng
-        if (isset($model->address_lat, $model->address_lng) && is_numeric($model->address_lat) && is_numeric($model->address_lng)) {
-            return [floatval($model->address_lat), floatval($model->address_lng)];
-        }
-        return null;
+        return \DVC\ContaoCustomCatalog\Util\Coordinates::fromModel($model);
     }
 
     private static function haversine(float $lat1, float $lon1, float $lat2, float $lon2): float
@@ -164,6 +142,7 @@ class ModuleCustomCatalogList extends Module
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
         $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+        $a = max(0.0, min(1.0, $a));
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $R * $c;
     }

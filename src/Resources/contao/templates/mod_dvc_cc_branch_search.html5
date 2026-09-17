@@ -26,7 +26,7 @@
                 </button>
               </div>
               <select class="select" name="branches_geo" data-element="submit-trigger">
-                <?php $opt = (string)($this->defaultRadius ?? '20'); ?>
+                <?php $opt = (string)(\Contao\Input::get('branches_geo') ?? $this->defaultRadius ?? '20'); ?>
                 <option value="10"<?= $opt==='10'?' selected':'' ?>>10 km</option>
                 <option value="20"<?= $opt==='20'?' selected':'' ?>>20 km</option>
                 <option value="50"<?= $opt==='50'?' selected':'' ?>>50 km</option>
@@ -55,15 +55,6 @@
 <script>
  (function(){
   if(!window.fetch){return;}
-  function loadMaps(api,cb){
-    if(window.google&&window.google.maps){cb();return;}
-    var s=document.createElement('script');
-    s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(api);
-    s.async=true; s.defer=true;
-    s.onload=function(){cb();};
-    s.onerror=function(){cb();};
-    document.head.appendChild(s);
-  }
   function C(){
     var t=this,a=null,g=null; t.elements={};
     t.settings={stateChangeRenderThreshold:10};
@@ -80,7 +71,7 @@
       t.settings.reloadElement=t.elements.list&&t.elements.list.getAttribute('data-ajax-reload-element');
       t.elements.form=t.elements.control&&t.elements.control.querySelector('form');
       t.elements.submitTriggers=t.elements.control?t.elements.control.querySelectorAll('[data-element="submit-trigger"]'):[];
-      t.settings.apiKey=e.getAttribute('data-api-key')||'';
+      t.settings.apiKey=t.elements.control.getAttribute('data-api-key')||'';
       t.elements.addr=t.elements.form&&t.elements.form.querySelector('input[name="branches_geo_address"]');
       t.elements.lat=t.elements.form&&t.elements.form.querySelector('input[name="branches_lat"]');
       t.elements.lng=t.elements.form&&t.elements.form.querySelector('input[name="branches_lng"]');
@@ -135,7 +126,10 @@
           })
           .catch(function(err){ t.setState('requesting',false); });
       };
-      if(t.settings.apiKey&&addr!==''){
+      if(t.elements.lat) t.elements.lat.value='';
+      if(t.elements.lng) t.elements.lng.value='';
+      // The site's consent loader owns external scripts. Use offline search until Maps is available.
+      if(window.google&&window.google.maps&&window.google.maps.Geocoder&&addr!==''){
         var resolve=function(){
           try{
             g=g||new google.maps.Geocoder();
@@ -154,7 +148,7 @@
             });
           }catch(_){ doAjax(); }
         };
-        loadMaps(t.settings.apiKey,resolve);
+        resolve();
         return;
       } else {
         
@@ -176,7 +170,7 @@
     };
     t.render=function(){ if(t.elements.submitButton){ var s=t.state.requesting?'loading':'idle'; if(t.state.requesting){ a=setTimeout(function(){t.elements.submitButton.setAttribute('data-state',s)},t.settings.stateChangeRenderThreshold);} else { clearTimeout(a); t.elements.submitButton.setAttribute('data-state',s);} } };
     t.setState=function(k,v){ t.state[k]=v; t.render(); };
-    t.makeURLWithFormData=function(it){ var u=new URL(location.href); var p=new URLSearchParams(u.search); for(const a of it){ var k=a[0],v=a[1]; p.append(k,v);} u.search=p.toString(); return u; };
+    t.makeURLWithFormData=function(it){ var u=new URL(location.href); var p=new URLSearchParams(u.search); for(const a of it){ var k=a[0],v=a[1]; p.set(k,v);} u.search=p.toString(); return u; };
   }
   function cleanStrayMarkers(el){
     try{

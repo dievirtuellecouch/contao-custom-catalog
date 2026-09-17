@@ -13,12 +13,12 @@ class EntryWrapper
 
     public function __get(string $key)
     {
-        return $this->model->{$key} ?? null;
+        return $this->model->{$key === 'überschrift' ? 'headline' : $key} ?? null;
     }
 
     public function field(string $name): FieldWrapper
     {
-        $value = $this->model->{$name} ?? null;
+        $value = $this->__get($name);
         $options = [];
         if ($name === 'address') {
             $options = [

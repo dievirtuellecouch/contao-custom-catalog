@@ -27,7 +27,7 @@ if (!isset($this->entries) || empty($this->entries)) {
   $mapStreet = $entry->field('address_street')->value();
   $mapZip = $entry->field('address_zipcode')->value();
   $mapCity = $entry->field('address_city')->value();
-  $optHeadline = $entry->field('überschrift')->value();
+  $optHeadline = $entry->field('headline')->value();
   if (!$mapLink) {
       $mapLink = 'https://www.google.de/maps/place/' . $mapStreet . '+' . $mapZip . '+' . $mapCity;
   }

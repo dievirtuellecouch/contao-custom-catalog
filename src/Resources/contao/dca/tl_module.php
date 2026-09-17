@@ -33,14 +33,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['dvc_cc_maps_api_key'] = [
     'sql' => ['type'=>'string','length'=>255,'default'=>''],
 ];
 
-// Target page for detail view
-$GLOBALS['TL_DCA']['tl_module']['fields']['jumpTo'] = [
-    'label' => ['Weiterleitungsseite', 'Zielseite für die Detailansicht.'],
-    'inputType' => 'pageTree',
-    'eval' => ['fieldType' => 'radio', 'tl_class' => 'clr'],
-    'sql' => ['type' => 'integer', 'unsigned' => true, 'default' => 0],
-];
-
 // Optional custom SQL WHERE for lists
 $GLOBALS['TL_DCA']['tl_module']['fields']['custom_sql_where'] = [
     'label' => ['Custom SQL WHERE','Optionaler SQL-Filter (z. B. id IN (1,2))'],

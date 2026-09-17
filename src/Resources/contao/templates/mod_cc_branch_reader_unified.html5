@@ -38,7 +38,7 @@ if (!function_exists('dvc_decode_entities')) {
       }, $tmpName);
   }
   $nameText = htmlspecialchars($tmpName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-  $customHeadline = (string) ($entry->field('überschrift')->value() ?? '');
+  $customHeadline = (string) ($entry->field('headline')->value() ?? '');
   $headlineRaw = $customHeadline !== '' ? $customHeadline : ('EHA Autoschilder '.$tmpName.' - Kennzeichen u. Zulassungsservice');
   $headline = htmlspecialchars($headlineRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
   $addressTitle = (string) ($entry->field('addressTitle')->value() ?? '');
@@ -51,7 +51,7 @@ if (!function_exists('dvc_decode_entities')) {
   $rows = [];
   $openingRaw = (string) ($entry->field('openingHours')->value() ?? '');
   if ($openingRaw !== '') {
-      $data = @unserialize($openingRaw);
+      $data = @unserialize($openingRaw, ['allowed_classes' => false]);
       if (is_array($data)) { $rows = $data; }
   }
   // Zahlungen Bild: nutze Bundle-Asset als Default
@@ -70,27 +70,8 @@ if (!function_exists('dvc_decode_entities')) {
   if ($mapLink === '' && ($street !== '' || $city !== '')) {
       $mapLink = 'https://www.google.de/maps/place/' . rawurlencode(trim($street.' '.$zip.' '.$city));
   }
-  $lat = null; $lng = null; $addrRaw = (string) ($entry->field('address')->value() ?? '');
-  if (strpos($addrRaw, ',') !== false) {
-      [$la, $lo] = array_map('trim', explode(',', $addrRaw, 2));
-      if ($la !== '' && $lo !== '') { $lat = (float)$la; $lng = (float)$lo; }
-  } elseif (preg_match('/^a:\\d+:\\{.*\\}$/s', $addrRaw)) {
-      $arr = @unserialize($addrRaw);
-      if (is_array($arr) && isset($arr[0], $arr[1])) { $lat = (float)$arr[0]; $lng = (float)$arr[1]; }
-  }
-  // Karte: Koordinaten aus address-Feld oder Link fallback
-  $mapLink = (string) ($entry->field('mapLink')->value() ?? '');
-  if ($mapLink === '' && ($street !== '' || $city !== '')) {
-      $mapLink = 'https://www.google.de/maps/place/' . rawurlencode(trim($street.' '.$zip.' '.$city));
-  }
-  $lat = null; $lng = null; $addrRaw = (string) ($entry->field('address')->value() ?? '');
-  if (strpos($addrRaw, ',') !== false) {
-      [$la, $lo] = array_map('trim', explode(',', $addrRaw, 2));
-      if ($la !== '' && $lo !== '') { $lat = (float)$la; $lng = (float)$lo; }
-  } elseif (preg_match('/^a:\\d+:\\{.*\\}$/s', $addrRaw)) {
-      $arr = @unserialize($addrRaw);
-      if (is_array($arr) && isset($arr[0], $arr[1])) { $lat = (float)$arr[0]; $lng = (float)$arr[1]; }
-  }
+  $coordinates = \DVC\ContaoCustomCatalog\Util\Coordinates::fromRaw($entry->field('address')->value());
+  [$lat, $lng] = $coordinates ?? [null, null];
 ?>
 <section class="s_d-default text">
   <div class="site-width">
@@ -290,7 +271,7 @@ if (!function_exists('dvc_decode_entities')) {
           'center' => ['lat' => $lat, 'lng' => $lng],
           'zoom' => 10,
           'markers' => [ ['lat' => $lat, 'lng' => $lng, 'title' => $name, 'url' => $mapLink] ],
-        ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) ?>
+        ], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>
       </script>
     </div>
   </div>

@@ -11,10 +11,8 @@ $GLOBALS['FE_MOD']['katalog']['dvc_cc_branch_list']    = DVC\ContaoCustomCatalog
 $GLOBALS['FE_MOD']['katalog']['dvc_cc_branch_reader']  = DVC\ContaoCustomCatalog\Module\ModuleCustomCatalogReader::class;
 
 // Legacy module type aliases for compatibility with existing records (frontend only)
-if (defined('TL_MODE') && TL_MODE === 'FE') {
-    $GLOBALS['FE_MOD']['custom_catalog']['customcataloglist']   = DVC\ContaoCustomCatalog\Module\ModuleCustomCatalogList::class;
-    $GLOBALS['FE_MOD']['custom_catalog']['customcatalogreader'] = DVC\ContaoCustomCatalog\Module\ModuleCustomCatalogReader::class;
-}
+$GLOBALS['FE_MOD']['custom_catalog']['customcataloglist']   = DVC\ContaoCustomCatalog\Module\ModuleCustomCatalogList::class;
+$GLOBALS['FE_MOD']['custom_catalog']['customcatalogreader'] = DVC\ContaoCustomCatalog\Module\ModuleCustomCatalogReader::class;
 
 // Backend modules (navigation) under Katalog group (as requested)
 // Ensure the custom group "katalog" appears directly under the core "content" group

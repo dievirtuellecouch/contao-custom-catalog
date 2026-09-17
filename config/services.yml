@@ -21,14 +21,8 @@ services:
     tags:
       - { name: contao.migration, priority: 0 }
 
-  # Overlay listener removed; reader is integrated server-side without subrequests
-  DVC\ContaoCustomCatalog\EventSubscriber\ReaderOutputFilterSubscriber:
-    arguments:
-      - '@request_stack'
-    public: false
-
   DVC\ContaoCustomCatalog\EventSubscriber\ResponseReplaceSubscriber: ~
 
-  # Register insert tag resolvers
-  DVC\ContaoCustomCatalog\InsertTag\UaInsertTag: ~
-  DVC\ContaoCustomCatalog\InsertTag\RequestTokenInsertTag: ~
+  DVC\ContaoCustomCatalog\Migration\RenameBranchHeadlineMigration:
+    tags:
+      - { name: contao.migration, priority: 100 }

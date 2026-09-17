@@ -29,7 +29,7 @@ class EnsureModuleFieldsMigration implements MigrationInterface
             }
 
             $cols = $sm->listTableColumns('tl_module');
-            if (!isset($cols['dvc_cc_reload_module_id']) || !isset($cols['dvc_cc_default_radius'])) {
+            if (!isset($cols['dvc_cc_reload_module_id']) || !isset($cols['dvc_cc_default_radius']) || !isset($cols['dvc_cc_maps_api_key']) || !isset($cols['custom_sql_where'])) {
                 return true;
             }
         } catch (\Throwable) {
@@ -45,6 +45,11 @@ class EnsureModuleFieldsMigration implements MigrationInterface
                 : $this->connection->getSchemaManager();
             $cols = $sm->listTableColumns('tl_module');
 
+            foreach (['dvc_cc_maps_api_key', 'custom_sql_where'] as $column) {
+                if (!isset($cols[$column])) {
+                    $this->connection->executeStatement("ALTER TABLE tl_module ADD ".$column." VARCHAR(255) NOT NULL DEFAULT ''");
+                }
+            }
             if (!isset($cols['dvc_cc_reload_module_id'])) {
                 $this->connection->executeStatement("ALTER TABLE tl_module ADD dvc_cc_reload_module_id INT UNSIGNED NOT NULL DEFAULT 0");
             }

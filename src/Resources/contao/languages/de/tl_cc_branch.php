@@ -35,3 +35,5 @@ $GLOBALS['TL_LANG']['tl_cc_branch']['products_legend'] = 'Produkte';
 $GLOBALS['TL_LANG']['tl_cc_branch']['times_legend']    = 'Öffnungszeiten';
 $GLOBALS['TL_LANG']['tl_cc_branch']['map_legend']      = 'Karte';
 $GLOBALS['TL_LANG']['tl_cc_branch']['gallery_legend']  = 'Galerie';
+
+$GLOBALS['TL_LANG']['tl_cc_branch']['headline'] = ['Überschrift', 'Optionale Überschrift für die Detailseite.'];

@@ -8,7 +8,7 @@ $GLOBALS['TL_DCA']['tl_cc_product'] = [
         'sql' => [ 'keys' => [ 'id' => 'primary' ] ],
         'onload_callback' => [
             function() {
-                if (!(defined('TL_MODE') && TL_MODE === 'BE')) { return; }
+                if (!\Contao\System::getContainer()->get('contao.routing.scope_matcher')->isBackendRequest(\Contao\System::getContainer()->get('request_stack')->getCurrentRequest())) { return; }
                 // Only inject on our module to avoid side effects elsewhere
                 if ((\Contao\Input::get('do') ?? '') !== 'cc_products') { return; }
                     $style = '<style>table.tl_listing th.tl_folder_list, table.tl_listing th.tl_folder_tlist { display:none !important; }</style>';
@@ -27,9 +27,9 @@ $GLOBALS['TL_DCA']['tl_cc_product'] = [
   var h=document.querySelector('.tl_pagetitle');
   if(h){
     var wrap=document.querySelector('.dvc-config-link');
-    if(!wrap){wrap=document.createElement('div');wrap.className='dvc-config-link';h.parentNode.insertBefore(wrap,h);} 
+    if(!wrap){wrap=document.createElement('div');wrap.className='dvc-config-link';h.parentNode.insertBefore(wrap,h);}
     var a=wrap.querySelector('a.header_edit_config');
-    if(!a){a=document.createElement('a');a.className='header_edit_config';a.setAttribute('onclick','Backend.getScrollOffset();');a.setAttribute('accesskey','e');a.textContent='Konfiguration bearbeiten';a.href='do=dvc_cc_products_config';wrap.appendChild(a);} 
+    if(!a){a=document.createElement('a');a.className='header_edit_config';a.setAttribute('onclick','Backend.getScrollOffset();');a.setAttribute('accesskey','e');a.textContent='Konfiguration bearbeiten';a.href='?do=dvc_cc_products_config';wrap.appendChild(a);}
   }
   cleanup();
   // Observe dynamic changes and cleanup again if needed
@@ -57,7 +57,7 @@ HTML;
             'fields' => ['title'],
             'flag' => 11,
             'disableGrouping' => true,
-            'group_callback' => static function ($group, $mode, $field, $row, \Contao\DataContainer $dc = null) {
+            'group_callback' => static function ($group, $mode, $field, $row, ?\Contao\DataContainer $dc = null) {
                 return '';
             },
         ],
@@ -65,7 +65,7 @@ HTML;
         'label' => [
             'fields' => ['title','titleAddition','name'],
             'showColumns' => false,
-            'label_callback' => static function(array $row, string $label, \Contao\DataContainer $dc = null, array $args = []) {
+            'label_callback' => static function(array $row, string $label, ?\Contao\DataContainer $dc = null, array $args = []) {
                 // Prefer public title; fall back to internal name if title is empty
                 $title = trim((string) ($args[0] ?? ''));
                 if ($title === '') {
