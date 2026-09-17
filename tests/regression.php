@@ -56,4 +56,6 @@ foreach (['application/json','text/html'] as $type) {
     (new ResponseReplaceSubscriber())(new ResponseEvent($kernel,$request,HttpKernelInterface::MAIN_REQUEST,$response));
     check($response->getContent() === ($type === 'text/html' ? '<main>DETAIL</main>' : '<main>OLD</main>'), 'response content type '.$type);
 }
+require __DIR__.'/../src/Resources/contao/dca/tl_cc_product.php';
+check($GLOBALS['TL_DCA']['tl_cc_product']['list']['global_operations']['config']['href'] === 'do=dvc_cc_products_config&table=tl_dvc_cc_products_config', 'native product configuration navigation');
 echo "$count regression assertions passed\n";

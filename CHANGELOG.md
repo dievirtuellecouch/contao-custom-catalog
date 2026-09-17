@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5 — 2026-09-17
+
+- Replace the obsolete JavaScript-injected product configuration link with a native Contao global operation. The link is now visible in the actual Contao 5.3 backend and targets the configuration table correctly.
+- Add a regression assertion for that operation. Includes all 1.0.4 corrections and upgrade requirements below.
+
 ## 1.0.4 — 2026-09-17
 
 - Fix saving and copying branches with a non-empty headline in Contao 5.3: rename the legacy `überschrift` column to `headline`, retaining all values. Existing EntryWrapper template calls using `überschrift` remain supported.

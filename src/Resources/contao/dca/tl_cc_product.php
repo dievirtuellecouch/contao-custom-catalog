@@ -6,51 +6,16 @@ $GLOBALS['TL_DCA']['tl_cc_product'] = [
     'config' => [
         'dataContainer' => DC_Table::class,
         'sql' => [ 'keys' => [ 'id' => 'primary' ] ],
-        'onload_callback' => [
-            function() {
-                if (!\Contao\System::getContainer()->get('contao.routing.scope_matcher')->isBackendRequest(\Contao\System::getContainer()->get('request_stack')->getCurrentRequest())) { return; }
-                // Only inject on our module to avoid side effects elsewhere
-                if ((\Contao\Input::get('do') ?? '') !== 'cc_products') { return; }
-                    $style = '<style>table.tl_listing th.tl_folder_list, table.tl_listing th.tl_folder_tlist { display:none !important; }</style>';
-                    $GLOBALS['TL_HEAD'][] = $style;
-
-                    $script = <<<'HTML'
-<script>(function(){
- function cleanup(){
-  var rows=document.querySelectorAll('table.tl_listing tr');
-  for(var i=0;i<rows.length;i++){
-    var thList=rows[i].querySelector('th.tl_folder_list, th.tl_folder_tlist');
-    if(thList){ rows[i].remove(); }
-  }
- }
- function ins(){
-  var h=document.querySelector('.tl_pagetitle');
-  if(h){
-    var wrap=document.querySelector('.dvc-config-link');
-    if(!wrap){wrap=document.createElement('div');wrap.className='dvc-config-link';h.parentNode.insertBefore(wrap,h);}
-    var a=wrap.querySelector('a.header_edit_config');
-    if(!a){a=document.createElement('a');a.className='header_edit_config';a.setAttribute('onclick','Backend.getScrollOffset();');a.setAttribute('accesskey','e');a.textContent='Konfiguration bearbeiten';a.href='?do=dvc_cc_products_config';wrap.appendChild(a);}
-  }
-  cleanup();
-  // Observe dynamic changes and cleanup again if needed
-  var list=document.getElementById('tl_listing');
-  if(list && window.MutationObserver){
-    var mo=new MutationObserver(function(){ cleanup(); });
-    mo.observe(list,{childList:true,subtree:true});
-  }
- }
- if(document.readyState==='loading'){
-   document.addEventListener('DOMContentLoaded',ins);
- } else {
-   ins();
- }
-})();</script>
-HTML;
-                    $GLOBALS['TL_BODY'][] = $script;
-            }
-        ],
     ],
     'list' => [
+        'global_operations' => [
+            'config' => [
+                'label' => ['Konfiguration bearbeiten', 'Produktkonfiguration bearbeiten'],
+                'href' => 'do=dvc_cc_products_config&table=tl_dvc_cc_products_config',
+                'icon' => 'edit.svg',
+            ],
+            'all',
+        ],
         // mode 1 + flag 11 = simple ascending sort; suppress grouping via group_callback
         'sorting' => [
             'mode' => 1,

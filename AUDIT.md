@@ -1,6 +1,6 @@
 # Bundle review — 2026-09-17
 
-Reviewed all tracked PHP classes, DCA definitions, services, migrations, templates, language files, JavaScript and Composer metadata at tag 1.0.3, against Contao 5.3.44 / PHP 8.4 / MariaDB 10.11. Version 1.0.4 contains the fixes listed in CHANGELOG.md.
+Reviewed all tracked PHP classes, DCA definitions, services, migrations, templates, language files, JavaScript and Composer metadata at tag 1.0.3, against Contao 5.3.44 / PHP 8.4 / MariaDB 10.11. Versions 1.0.4–1.0.5 contain the fixes listed in CHANGELOG.md.
 
 ## Confirmed primary defect
 
@@ -17,7 +17,7 @@ The fix renames the column in place, updates the DCA and templates, and retains 
 - Regex-based detail replacement truncated nested main divs or discarded the document head in body fallback. JSON/error responses are now excluded.
 - A frontend-template listener referenced a class absent from Contao 5.3; redundant response rewriting was removed.
 - Global DCA changes hid AJAX settings and overwrote jumpTo configuration for unrelated modules.
-- Legacy aliases and product configuration navigation relied on the removed TL_MODE constant; the configuration link missed its query delimiter.
+- Legacy aliases and product configuration navigation relied on the removed TL_MODE constant; the configuration link missed its query delimiter and targeted an obsolete backend DOM element. Version 1.0.5 replaces the script with a native global operation.
 - Two service definitions referenced nonexistent insert-tag classes.
 - Migration detection omitted the products configuration table and existing-table additions. Module field migration omitted API-key and SQL-filter columns. Silent column failures are now reported, and unrelated potentially truncating type changes were removed.
 - Plain address output and JSON script content lacked appropriate escaping. Direct unserialization now disables object instantiation.
